@@ -1,0 +1,206 @@
+version: '3.7'
+
+services:
+  zookeeper-server:
+    image: "bitnami/zookeeper:latest"
+    # image: docker.io/bitnami/zookeeper:3.8
+    networks:
+      - localnet
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    restart: unless-stopped
+
+  kafka-server:
+    image: "bitnami/kafka:latest"
+    # image: docker.io/bitnami/kafka:3.3
+    networks:
+      - localnet
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper-server:2181
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - SECURITY_PROTOCOL=SASL_SSL
+    depends_on:
+      - zookeeper-server
+    restart: unless-stopped
+
+  elasticsearch:
+    image: elasticsearch:7.17.6
+    container_name: elasticsearch
+    environment:
+      - ELASTIC_PASSWORD=changeme
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - discovery.type=single-node
+      - cluster.name=es-docker
+      - node.name=node1
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+    # mem_limit: 4g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+    networks:
+      - localnet
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    volumes:
+      - ./rs-init.sh:/scripts/rs-init.sh
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "27017:27017"
+    networks:
+      - localnet
+  
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - localnet
+
+  starock:
+    image: starrocks/allin1-ubuntu
+    container_name: starock
+    restart: always
+    ports:
+    - "9030:9030" 
+    - "8030:8030"
+    - "8040:8040"
+    healthcheck:
+      test: 'mysql -u root -h starrocks-fe -P 9030 -e "show frontends\G" |grep "Alive: true"'
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+        minio:
+            condition: service_healthy
+    networks:
+      - localnet
+      
+  minio:
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: miniouser
+      MINIO_ROOT_PASSWORD: miniopassword
+    image: minio/minio:latest
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    entrypoint: sh
+    command: '-c ''mkdir -p /minio_data/starrocks && minio server /minio_data --console-address ":9001"'''
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio_mc:
+    # This service is short lived, it does this:
+    # - starts up
+    # - checks to see if the MinIO service `minio` is ready
+    # - creates a MinIO Access Key that the StarRocks services will use
+    # - exits
+    image: minio/mc:latest
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until mc ls minio > /dev/null 2>&1; do
+          sleep 0.5
+        done
+
+        mc alias set myminio http://minio:9000 miniouser miniopassword
+        mc admin user svcacct add --access-key AAAAAAAAAAAAAAAAAAAA \
+        --secret-key BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB \
+        myminio \
+        miniouser
+    depends_on:
+        minio:
+          condition: service_healthy
+  # kibana:
+  #   container_name: kibana
+  #   image: kibana:7.17.6
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #     - ELASTICSEARCH_USERNAME=elastic
+  #     - ELASTICSEARCH_PASSWORD=changeme
+  #   ports:
+  #     - 5601:5601
+  #   networks:
+  #     - test
+  #   depends_on:
+  #     - elasticsearch
+
+  # monstache-profile:
+  #   image: rwynn/monstache:6.7.10
+  #   container_name: monstacheprofile
+  #   working_dir: /app
+  #   command: -f ./monstache_profile.config.toml
+  #   volumes:
+  #     - ./monstache_profile.config.toml:/app/monstache_profile.config.toml
+  #   depends_on:
+  #     - elasticsearch
+  #     - mongo0
+  #   ports:
+  #     - "8080:8080"
+  #   networks:
+  #     - test
+  #   healthcheck:
+  #     test: "wget -q -O - http://localhost:8080/healthz"
+  #     interval: 10s
+  #     timeout: 30s
+  #     retries: 300
+  #   restart: unless-stopped
+
+  # monstache-tags:
+  #   image: rwynn/monstache:6.7.10
+  #   container_name: monstachetags
+  #   working_dir: /app
+  #   command: -f ./monstache_tags.config.toml
+  #   volumes:
+  #     - ./monstache_tags.config.toml:/app/monstache_tags.config.toml
+  #   depends_on:
+  #     - elasticsearch
+  #     - mongo0
+  #   ports:
+  #     - "8081:8080"
+  #   networks:
+  #     - test
+  #   healthcheck:
+  #     test: "wget -q -O - http://localhost:8080/healthz"
+  #     interval: 10s
+  #     timeout: 30s
+  #     retries: 300
+  #   restart: unless-stopped
+
+volumes:
+  elasticsearch-data:
+    driver: local
+
+networks:
+  localnet:
+    driver: bridge
