@@ -1,0 +1,50 @@
+https://docs.google.com/document/d/1cR_7iWAAFllu3a0MFRKzUQhFFyVvPbH2BEyLdRgYRFQ/edit?tab=t.0#heading=h.p0qoxf2ghyz1
+
+# MOMOKIES
+
+MOMOKIES là projects docker-compose chứa các docker cơ bản để test việc đồng bộ data từ mongo -> elasticsearch của module profiling:
+
+* Setup a standalone elasticsearch:7.17.6
+* Setup a standalone kibana:7.17.6
+* Setup a cluster single node mongo:4.4
+* Setup monstache:6.7.10
+
+## Mục Đích
+* Test việc đồng bộ giữa Mongo vs ElasticSearch
+* Test việc đồng đồng bộ child documents và đảm bảo khi các child documents được thêm mới, sẽ không sinh ra các deleted docs trên ElasticSearch
+
+# chạy dockerfile 
+docker build -t monstache_profile .
+
+# coppy file so 
+docker cp 390f8770a195:/bin/profiling/plugin_profile.so /home/toandd/Documents/profilingmonstache/plugins/plugin_profile.so
+
+## Using Docker Compose
+
+```bash
+$ docker-compose up -d
+```
+
+Nếu MongoDB không khởi tạo được cluster bằng script rs-init.sh, khởi tạo thủ công bằng cách sau:
+```bash
+$ docker-compose exec mongo0 bash
+$ sh scripts/rs-init.sh
+```
+
+Nếu MongoDB không khởi tạo được user, sử dụng các command line sau đây để khởi tạo:
+```bash
+$ docker-compose exec mongo0 mongo
+$ use admin
+$ db.createUser({user: "admin", pwd: "admin",roles:[{role: "userAdminAnyDatabase" , db:"admin"}]}) 
+```
+
+Sau khi khởi tạo các docker, sử dụng CURL trong folder resources để tạo mapping cho index profiling. 
+
+# tạo primary 
+cfg = rs.conf()
+cfg.members[0].host = "localhost:27017"
+rs.reconfig(cfg)
+
+cfg = rs.conf()
+cfg.members[0].host = "mongo0:27017"
+rs.reconfig(cfg)
