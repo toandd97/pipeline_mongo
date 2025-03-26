@@ -1,0 +1,27 @@
+gzip = true
+elasticsearch-user="elastic"
+elasticsearch-password="changeme"
+mongo-url = "mongodb://admin:admin@mongo:27017/?"
+
+elasticsearch-urls = ["http://elasticsearch:9200"]
+
+elasticsearch-max-conns = 4
+
+change-stream-namespaces = ["profiling.profile"]
+direct-read-namespaces = ["profiling.profile"]
+direct-read-stateful = true
+
+stats = true
+resume = true
+resume-strategy = 1
+resume-name="monstache-profiling-profile"
+mapper-plugin-path = "/bin/some_cases_plugin.so"
+
+
+[logs]
+error = "/dev/stderr"
+
+[gtm-settings]
+buffer-size = 128
+buffer-duration = "150ms"
+channel-size = 1024
