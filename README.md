@@ -19,39 +19,21 @@ Tài liệu này hướng dẫn cách thiết lập hệ thống pipeline dữ l
 2.4. Công cụ hỗ trợ khác
 
 ✅ Docker → Để chạy tất cả các thành phần trong container.
-3. Cài Đặt MongoDB với Replica Set
-Bước 1: Xóa Container MongoDB Cũ (Nếu Có)
 
-Nếu bạn đã có container MongoDB chạy mà không có Replica Set, hãy xóa nó trước:
-docker rm -f mongo-rs
-Bước 2: Chạy MongoDB với Replica Set
-docker run -d --name mongo-rs \
-  -p 27017:27017 \
-  --restart unless-stopped \
-  mongo:6.0 --replSet rs0
+Bước 3: Truy cập vào MongoDB Shell trong container:
 
-    --replSet rs0: Kích hoạt chế độ Replica Set với tên rs0.
+Nếu MongoDB không khởi tạo được cluster bằng script rs-init.sh, khởi tạo thủ công bằng cách sau:
+```bash
+$ docker-compose exec mongo bash
+$ sh scripts/rs-init.sh
+```
 
-Bước 3: Khởi Tạo Replica Set
-
-    Truy cập vào MongoDB Shell trong container:
-
-docker exec -it mongo-rs mongosh
-
-    Khởi tạo Replica Set:
-
-rs.initiate()
-
-    Kiểm tra trạng thái Replica Set:
-
-rs.status()
-
-    Nếu thấy ok: 1, Replica Set đã hoạt động thành công.
-
-Bước 4: Kiểm Tra Oplog
-
-    Chuyển sang database local:
-
+Nếu MongoDB không khởi tạo được user, sử dụng các command line sau đây để khởi tạo:
+```bash
+$ docker-compose exec mongo mongosh
+$ use admin
+$ db.createUser({user: "admin", pwd: "admin",roles:[{role: "userAdminAnyDatabase" , db:"admin"}]}) 
+# docker-entrypoint-initdb.d/mongo-init.js
 use local
 
     Kiểm tra Oplog:
@@ -59,13 +41,43 @@ use local
 db.oplog.rs.find().limit(5).pretty()
 
 Nếu thấy dữ liệu, Oplog đã hoạt động thành công.
-4. Thiết Lập Monstache để Đồng Bộ MongoDB → StarRocks & Elasticsearch
-Bước 1: Cài Đặt Monstache
 
-(TBD)
-Bước 2: Cấu Hình Monstache
+4. Thiết Lập Monstache để Đồng Bộ MongoDB → StarRocks & Elasticsearch (xử lý Streaming)
+    4.1 Đồng bộ elasticsearch
+        4.1.1 tạo image monstache cá nhân
+        Do môi trường ở local và môi trường trong docker là khác nhau nên nếu build file .so ở local rồi mount vào docker thì trong docker không đọc được.
+        chạy file dockerfile để tạo riêng 1 images: docker build -t monstache_profile 
+        Kết quả: có file some_cases_plugin.go trong thư mục bin/profiling của container_name: monstacheprofile
 
-(TBD)
+        Thay image vừa build được từ Dockerfile vào image của Monstache
+
+        Để sử dụng plugin ở nhiều nơi khác nhau thì copy file .so vừa build về local và gửi cho team devops để đẩy lên các máy: 
+            docker cp <CONTAINER ID>:/bin/profiling/some_cases_plugin.so /<path>/some_cases_plugin.so
+
+        4.1.2  Run lại để mount file so
+            Có 2 cách là thêm command mapper-plugin-path file .so của images monstache, hoặc thêm key "mapper-plugin-path" trong file toml rồi chạy lại images
+            -cách 1: file docker-compose
+            monstache-profile:
+                image: monstache_profile:latest
+                container_name: monstacheprofile
+                working_dir: /app
+                command: -f ./monstache_profile.config.toml -mapper-plugin-path /bin/profiling/some_cases_plugin.so
+                volumes:
+                - ./monstache_profile.config.toml:/app/monstache_profile.config.toml
+            -cách 2: file toml
+            stats = true
+            resume = true
+            resume-strategy = 1
+            resume-name="monstache-profiling-profile"
+
+            mapper-plugin-path = "/bin/profiling/plugin_profile.so"
+
+            [logs]
+            error = "/dev/stderr"
+
+        4.1.3 Kiểm tra có đồng bộ được không
+    4.2 Đồng bộ Starrock
+
 5. Cài Đặt PySpark để Xử Lý Batch
 Bước 1: Cài Đặt PySpark
 

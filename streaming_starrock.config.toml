@@ -1,0 +1,12 @@
+# Kết nối MongoDB
+mongo-url = "mongodb://admin:admin@mongo:27017/?"
+
+# Monstache sẽ theo dõi thay đổi trên MongoDB
+change-stream-namespaces = ["profiling.profile"]
+
+# Gọi HTTP Stream Load API của StarRocks
+[[relate]]
+namespace = "profiling.profile"
+method = "POST"
+url = "http://starrocks-fe:8030/api/profiling/profile/_stream_load"
+header = { "format" = "json", "StarRocks-User" = "root", "StarRocks-Passwd" = "password" }

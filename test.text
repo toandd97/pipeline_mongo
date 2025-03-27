@@ -27,13 +27,13 @@ $ docker-compose up -d
 
 Nếu MongoDB không khởi tạo được cluster bằng script rs-init.sh, khởi tạo thủ công bằng cách sau:
 ```bash
-$ docker-compose exec mongo0 bash
+$ docker-compose exec mongo bash
 $ sh scripts/rs-init.sh
 ```
 
 Nếu MongoDB không khởi tạo được user, sử dụng các command line sau đây để khởi tạo:
 ```bash
-$ docker-compose exec mongo0 mongo
+$ docker-compose exec mongo mongosh
 $ use admin
 $ db.createUser({user: "admin", pwd: "admin",roles:[{role: "userAdminAnyDatabase" , db:"admin"}]}) 
 ```
@@ -46,5 +46,5 @@ cfg.members[0].host = "localhost:27017"
 rs.reconfig(cfg)
 
 cfg = rs.conf()
-cfg.members[0].host = "mongo0:27017"
+cfg.members[0].host = "mongo:27017"
 rs.reconfig(cfg)

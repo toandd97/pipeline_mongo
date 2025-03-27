@@ -12,8 +12,8 @@ import (
 // with a value of {"name": "profile"}. It also extracts the "profile_id" field and converts it to a string,
 // which is used as the document ID and routing value.
 func Map(input *monstachemap.MapperPluginInput) (output *monstachemap.MapperPluginOutput, err error) {
-    indexMapping := os.Getenv("INDEX_MAPPING")
-    if indexMapping == "" {
+    indexMapping, exists := os.LookupEnv("INDEX_MAPPING")
+    if !exists || indexMapping == "" {
         indexMapping = "mobio-profiling-v16_3"
         // return nil, fmt.Errorf("INDEX_MAPPING environment variable is not set")
     }
