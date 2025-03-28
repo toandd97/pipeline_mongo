@@ -61,9 +61,9 @@ Nếu thấy dữ liệu, Oplog đã hoạt động thành công.
                 image: monstache_profile:latest
                 container_name: monstacheprofile
                 working_dir: /app
-                command: -f ./monstache_profile.config.toml -mapper-plugin-path /bin/profiling/some_cases_plugin.so
+                command: -f ./streaming_elasticsearch.config.toml -mapper-plugin-path /bin/profiling/some_cases_plugin.so
                 volumes:
-                - ./monstache_profile.config.toml:/app/monstache_profile.config.toml
+                - ./streaming_elasticsearch.config.toml:/app/streaming_elasticsearch.config.toml
             -cách 2: file toml
             stats = true
             resume = true
@@ -77,7 +77,62 @@ Nếu thấy dữ liệu, Oplog đã hoạt động thành công.
 
         4.1.3 Kiểm tra có đồng bộ được không
     4.2 Đồng bộ Starrock
+        Monstache sẽ đọc dữ liệu từ MongoDB bằng Change Streams hoặc Direct Read, sau đó gửi dữ liệu lên StarRocks bằng HTTP Stream Load API.
 
+        🔗 Luồng dữ liệu:
+        MongoDB ➝ Monstache ➝ HTTP Stream Load API ➝ StarRocks
+        🔗 Cấp full quyền truy cập và thao tác cho user root:
+        docker exec -it starrock mysql -h127.0.0.1 -P9030 -uroot
+        SHOW GRANTS FOR 'root'@'%';
+        GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
+        GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+        🔗 Tạo 1 user và cấp quyền:
+        mysql -h 127.0.0.1 -P 9030 -u root
+        mysql> CREATE USER 'toandd'@'%' IDENTIFIED BY '123';
+        GRANT SYSTEM ALL TO toan WITH GRANT OPTION;
+
+        Query OK, 0 rows affected (0,01 sec)
+        # cần viết lại doc xem cấp quyền cái nào là đúng
+        GRANT root TO 'toan';
+        GRANT db_admin TO 'toan';
+        GRANT cluster_admin TO 'toan';
+        GRANT user_admin TO 'toan';
+        SET DEFAULT ROLE ALL TO 'toan';
+
+        mysql> GRANT ALL PRIVILEGES ON *.* TO 'toandd'@'%' WITH GRANT OPTION;
+        GRANT ALL ON *.* TO 'toan'@'%' WITH GRANT OPTION;
+
+        GRANT GRANT OPTION ON SYSTEM TO 'toandd'@'%';
+
+        mysql -h 127.0.0.1 -P 9030 -u toandd -p
+        CREATE DATABASE profiling;
+        SHOW DATABASES;
+        USE profiling;
+        CREATE TABLE profile (
+            id INT,
+            name VARCHAR(50),
+            age INT,
+            email VARCHAR(100)
+        )
+        ENGINE=OLAP
+        DUPLICATE KEY(id)
+        DISTRIBUTED BY HASH(id) BUCKETS 3
+        PROPERTIES ("replication_num" = "1");
+
+        1. Tạo thư mục làm việc
+            mkdir ~/Documents/pipeline_mongo/kafka-config
+            cd ~/Documents/pipeline_mongo/kafka-config
+        2. Tải file starrocks-kafka-connector-1.0.4.tar.gz
+        wget https://github.com/StarRocks/starrocks-connector-for-kafka/releases/download/v1.0.4/starrocks-kafka-connector-1.0.4.tar.gz
+        tar -xzf starrocks-kafka-connector-1.0.4.tar.gz
+        cd starrocks-connector-for-kafka-1.0.4
+        sudo apt install maven
+        mvn clean package
+        sau khi xong thì đảm bảo chỉ còn 3 file trong thư mục:
+        connect-standalone.properties
+        connect-StarRocks-sink.properties
+        starrocks-connector-for-kafka-1.0-SNAPSHOT.jar (hiện tại sau khi maven thì thành snapshot)
+        chạy lại docker compose
 5. Cài Đặt PySpark để Xử Lý Batch
 Bước 1: Cài Đặt PySpark
 
