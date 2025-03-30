@@ -126,13 +126,45 @@ Nếu thấy dữ liệu, Oplog đã hoạt động thành công.
         wget https://github.com/StarRocks/starrocks-connector-for-kafka/releases/download/v1.0.4/starrocks-kafka-connector-1.0.4.tar.gz
         tar -xzf starrocks-kafka-connector-1.0.4.tar.gz
         cd starrocks-connector-for-kafka-1.0.4
+
+        sua file pom.xml phan build
+    #     <build>
+    #     <plugins>
+    #         <plugin>
+    #             <groupId>org.apache.maven.plugins</groupId>
+    #             <artifactId>maven-shade-plugin</artifactId>
+    #             <version>3.4.1</version>
+    #             <executions>
+    #                 <execution>
+    #                     <phase>package</phase>
+    #                     <goals>
+    #                         <goal>shade</goal>
+    #                     </goals>
+    #                     <configuration>
+    #                         <createDependencyReducedPom>false</createDependencyReducedPom>
+    #                         <filters>
+    #                             <filter>
+    #                                 <artifact>*:*</artifact>
+    #                                 <excludes>
+    #                                     <exclude>META-INF/*.SF</exclude>
+    #                                     <exclude>META-INF/*.DSA</exclude>
+    #                                     <exclude>META-INF/*.RSA</exclude>
+    #                                 </excludes>
+    #                             </filter>
+    #                         </filters>
+    #                     </configuration>
+    #                 </execution>
+    #             </executions>
+    #         </plugin>
+    #     </plugins>
+    # </build>
         sudo apt install maven
         mvn clean package
         sau khi xong thì đảm bảo chỉ còn 3 file trong thư mục:
         connect-standalone.properties
         connect-StarRocks-sink.properties
         starrocks-connector-for-kafka-1.0-SNAPSHOT.jar (hiện tại sau khi maven thì thành snapshot)
-        chạy lại docker compose
+        chạy lại docker kafka-connect
 5. Cài Đặt PySpark để Xử Lý Batch
 Bước 1: Cài Đặt PySpark
 

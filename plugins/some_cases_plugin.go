@@ -2,6 +2,7 @@
 package main
 import (
     "os"
+    "fmt"
     "github.com/gofrs/uuid"
     "github.com/rwynn/monstache/v6/monstachemap"
     "go.mongodb.org/mongo-driver/bson/primitive"
@@ -12,8 +13,10 @@ import (
 // with a value of {"name": "profile"}. It also extracts the "profile_id" field and converts it to a string,
 // which is used as the document ID and routing value.
 func Map(input *monstachemap.MapperPluginInput) (output *monstachemap.MapperPluginOutput, err error) {
-    indexMapping, exists := os.LookupEnv("INDEX_MAPPING")
-    if !exists || indexMapping == "" {
+    fmt.Println("Plugin is running!")
+    indexMapping := os.Getenv("INDEX_MAPPING")
+    fmt.Printf("INDEX_MAPPING: %s\n", indexMapping)
+    if indexMapping == "" {
         indexMapping = "mobio-profiling-v16_3"
         // return nil, fmt.Errorf("INDEX_MAPPING environment variable is not set")
     }
