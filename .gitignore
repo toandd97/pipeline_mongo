@@ -1,1 +1,13 @@
 venv
+| Tiêu chí | Spark Streaming | Kafka Streams | Apache Flink |
+|----------|-----------------|---------------|--------------|
+| Độ trễ | Cao (vài giây) | Thấp | Cực thấp |
+| Processing model | Micro-batch | Event-by-event | Event-by-event |
+| Resource usage | Cao | Thấp | Cao |
+| Learning curve | Trung bình | Thấp | Cao |
+| Features | Nhiều | Cơ bản | Nhiều |
+| Scale | Tốt | Tốt | Rất tốt |
+| Window processing | Cơ bản | Tốt | Rất tốt |
+| State management | Cơ bản | Tốt | Rất tốt |
+| ML capabilities | Có | Không | Không |
+| SQL interface | Có | Không | Có |

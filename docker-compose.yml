@@ -1,4 +1,3 @@
-
 services:
   zookeeper:
     image: "bitnami/zookeeper:latest"
@@ -107,16 +106,41 @@ services:
     networks:
       - localnet
 
+  # kafka-connect:
+  #   image: confluentinc/cp-kafka-connect:latest
+  #   container_name: kafka-connect
+  #   depends_on:
+  #     - kafka
+  #     - starrock
+  #   networks:
+  #   - localnet
+  #   volumes:
+  #     - ./kafka-config:/etc/kafka-connect
+  #   environment:
+  #     CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+  #     CONNECT_REST_PORT: 8083
+  #     CONNECT_GROUP_ID: connect-group
+  #     CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+  #     CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+  #     CONNECT_STATUS_STORAGE_TOPIC: connect-status
+  #     CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+  #     CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+  #     CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "true"
+  #     CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+  #   command:
+  #     - connect-standalone
+  #     - /etc/kafka-connect/connect-standalone.properties
+  #     - /etc/kafka-connect/connect-StarRocks-sink.properties
+  
+
   kafka-connect:
-    image: confluentinc/cp-kafka-connect:latest
+    image: confluentinc/cp-kafka-connect:7.2.0
     container_name: kafka-connect
     depends_on:
       - kafka
       - starrock
     networks:
-    - localnet
-    volumes:
-      - ./kafka-config:/etc/kafka-connect
+      - localnet
     environment:
       CONNECT_BOOTSTRAP_SERVERS: kafka:9092
       CONNECT_REST_PORT: 8083
@@ -192,19 +216,23 @@ services:
       retries: 300
     restart: unless-stopped
 
-  # starrock-streaming:
-  #   image: rwynn/monstache:6.7.10
-  #   container_name: starrock_streaming
-  #   working_dir: /app
-  #   command: -f ./streaming_starrock.config.toml
-  #   volumes:
-  #     - ./streaming_starrock.config.toml:/app/streaming_starrock.config.toml
-  #   depends_on:
-  #     - mongo
-  #     - starrock
-  #   networks:
-  #     - localnet
-  #   restart: unless-stopped
+  spark:
+    image: apache/spark
+    container_name: spark
+    networks:
+      - localnet
+    restart: unless-stopped
+    # volumes:
+    #   - ./spark-apps:/opt/spark-apps  # Thư mục chứa ứng dụng Scala của bạn
+    #   - ./spark-jars:/opt/spark/jars  # Thư mục chứa các JAR connector
+    environment:
+      - SPARK_MODE=master           # Chạy Spark ở chế độ master
+      - SPARK_MASTER_HOST=spark     # Đặt host cho Spark master
+      - SPARK_MASTER_PORT=7077      # Port mặc định của Spark master
+    ports:
+      - "8081:8081"                 # Web UI của Spark master
+      - "7077:7077"                 # Port giao tiếp Spark master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master  # Khởi động Spark master
     
   # monstache-tags:
   #   image: rwynn/monstache:6.7.10

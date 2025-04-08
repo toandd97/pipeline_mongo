@@ -1,0 +1,20 @@
+1. Mất kết nối đến MongoDB hoặc StarRocks
+Kết nối mạng không ổn định hoặc hệ thống gặp sự cố, dẫn đến quá trình đồng bộ bị gián đoạn.
+2. Oplog bị ghi đè (overwritten)
+Oplog có kích thước giới hạn, nếu đồng bộ chậm hoặc gián đoạn lâu, dữ liệu cũ có thể bị mất.
+3. Thứ tự thực thi không đúng
+Thao tác trong oplog không được xử lý theo đúng thứ tự, gây sai lệch dữ liệu.
+4. Xung đột dữ liệu
+Nhiều thao tác cập nhật cùng một bản ghi trong thời gian ngắn gây ra dữ liệu không nhất quán.
+5. Lỗi trong quá trình chuyển đổi dữ liệu
+Dữ liệu từ MongoDB (NoSQL) không khớp với schema cố định của StarRocks (SQL).
+6. Hiệu suất thấp
+Lượng dữ liệu lớn hoặc tần suất thay đổi cao khiến đồng bộ không theo kịp.
+7. Lỗi trong quá trình thực thi SQL
+Câu lệnh SQL không hợp lệ hoặc StarRocks gặp sự cố khi thực thi.
+8. Phiên bản không tương thích
+Sự thay đổi phiên bản của MongoDB hoặc StarRocks gây ra lỗi đồng bộ.
+9. Bảo mật dữ liệu
+Dữ liệu bị lộ trong quá trình đồng bộ nếu không được mã hóa hoặc bảo vệ.
+10. Thiếu cơ chế xử lý lỗi toàn diện
+Không có cách xử lý lỗi tốt, một lỗi nhỏ có thể dừng toàn bộ quá trình.
