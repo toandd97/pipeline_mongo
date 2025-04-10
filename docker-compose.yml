@@ -106,78 +106,6 @@ services:
     networks:
       - localnet
 
-  # kafka-connect:
-  #   image: confluentinc/cp-kafka-connect:latest
-  #   container_name: kafka-connect
-  #   depends_on:
-  #     - kafka
-  #     - starrock
-  #   networks:
-  #   - localnet
-  #   volumes:
-  #     - ./kafka-config:/etc/kafka-connect
-  #   environment:
-  #     CONNECT_BOOTSTRAP_SERVERS: kafka:9092
-  #     CONNECT_REST_PORT: 8083
-  #     CONNECT_GROUP_ID: connect-group
-  #     CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
-  #     CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
-  #     CONNECT_STATUS_STORAGE_TOPIC: connect-status
-  #     CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-  #     CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-  #     CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "true"
-  #     CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
-  #   command:
-  #     - connect-standalone
-  #     - /etc/kafka-connect/connect-standalone.properties
-  #     - /etc/kafka-connect/connect-StarRocks-sink.properties
-  
-
-  kafka-connect:
-    image: confluentinc/cp-kafka-connect:7.2.0
-    container_name: kafka-connect
-    depends_on:
-      - kafka
-      - starrock
-    networks:
-      - localnet
-    environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
-      CONNECT_REST_PORT: 8083
-      CONNECT_GROUP_ID: connect-group
-      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
-      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
-      CONNECT_STATUS_STORAGE_TOPIC: connect-status
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "true"
-      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
-    command:
-      - connect-standalone
-      - /etc/kafka-connect/connect-standalone.properties
-      - /etc/kafka-connect/connect-StarRocks-sink.properties
-  
-
-  kafka-connect-v2:
-    image: confluentinc/cp-kafka-connect:latest
-    container_name: kafka-connect
-    depends_on:
-      - kafka
-      - starrock
-    networks:
-    - localnet
-    command: 
-      - bash
-      - -c
-      - "connect-standalone /etc/kafka-connect/connect-standalone.properties /etc/kafka-connect/connect-StarRocks-sink.properties"
-    volumes:
-      - ./starrocks-kafka-connector-1.0.4:/usr/share/confluent-hub-components/starrocks-kafka-connector
-      - ./config/connect-standalone.properties:/etc/kafka-connect/connect-standalone.properties
-      - ./config/connect-StarRocks-sink.properties:/etc/kafka-connect/connect-StarRocks-sink.properties
-    environment:
-      CONNECT_CLASSPATH: "/usr/share/confluent-hub-components/starrocks-kafka-connector/*"
-
-
   # kibana:
   #   container_name: kibana
   #   image: kibana:7.17.6
@@ -192,32 +120,32 @@ services:
   #   depends_on:
   #     - elasticsearch
 
-  monstache-profile:
-    # image: rwynn/monstache:6.7.10
-    image: monstache_profile
-    container_name: monstache_profile
-    working_dir: /app
-    command: -f ./streaming_elasticsearch.config.toml
-    volumes:
-      - ./streaming_elasticsearch.config.toml:/app/streaming_elasticsearch.config.toml
-    environment:
-      - INDEX_MAPPING=mobio-profiling-v16_3
-    depends_on:
-      - elasticsearch
-      - mongo
-    ports:
-      - "8080:8080"
-    networks:
-      - localnet
-    healthcheck:
-      test: "wget -q -O - http://localhost:8080/healthz"
-      interval: 10s
-      timeout: 30s
-      retries: 300
-    restart: unless-stopped
+  # monstache-profile:
+  #   # image: rwynn/monstache:6.7.10
+  #   image: monstache_profile
+  #   container_name: monstache_profile
+  #   working_dir: /app
+  #   command: -f ./streaming_elasticsearch.config.toml
+  #   volumes:
+  #     - ./streaming_elasticsearch.config.toml:/app/streaming_elasticsearch.config.toml
+  #   environment:
+  #     - INDEX_MAPPING=mobio-profiling-v16_3
+  #   depends_on:
+  #     - elasticsearch
+  #     - mongo
+  #   ports:
+  #     - "8080:8080"
+  #   networks:
+  #     - localnet
+  #   healthcheck:
+  #     test: "wget -q -O - http://localhost:8080/healthz"
+  #     interval: 10s
+  #     timeout: 30s
+  #     retries: 300
+  #   restart: unless-stopped
 
   spark:
-    image: apache/spark
+    image: apache/spark:3.5.0
     container_name: spark
     networks:
       - localnet
@@ -230,7 +158,7 @@ services:
       - SPARK_MASTER_HOST=spark     # Đặt host cho Spark master
       - SPARK_MASTER_PORT=7077      # Port mặc định của Spark master
     ports:
-      - "8081:8081"                 # Web UI của Spark master
+      - "8080:8080"                 # Web UI của Spark master
       - "7077:7077"                 # Port giao tiếp Spark master
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master  # Khởi động Spark master
     
