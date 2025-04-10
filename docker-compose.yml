@@ -151,8 +151,8 @@ services:
       - localnet
     restart: unless-stopped
     # volumes:
-    #   - ./spark-apps:/opt/spark-apps  # Thư mục chứa ứng dụng Scala của bạn
-    #   - ./spark-jars:/opt/spark/jars  # Thư mục chứa các JAR connector
+    # #   - ./spark-apps:/opt/spark-apps  # Thư mục chứa ứng dụng Scala của bạn
+      # - ./spark-jars:/opt/spark/jars  # Thư mục chứa các JAR connector
     environment:
       - SPARK_MODE=master           # Chạy Spark ở chế độ master
       - SPARK_MASTER_HOST=spark     # Đặt host cho Spark master
