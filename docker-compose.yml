@@ -161,7 +161,21 @@ services:
       - "8080:8080"                 # Web UI của Spark master
       - "7077:7077"                 # Port giao tiếp Spark master
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master  # Khởi động Spark master
-    
+  spark-worker:
+    image: apache/spark:3.5.0
+    container_name: spark-worker
+    depends_on:
+      - spark
+    networks:
+      - localnet
+    restart: unless-stopped
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER=spark://spark:7077
+    ports:
+      - "8081:8081"  # Spark Worker UI
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark:7077
+
   # monstache-tags:
   #   image: rwynn/monstache:6.7.10
   #   container_name: monstachetags

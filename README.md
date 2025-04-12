@@ -235,27 +235,18 @@ value.converter.schemas.enable=false
 
 ### 4. Tạo script khởi tạo MongoDB
 
-Tạo file `mongo-scripts/rs-init.sh`:
+Nếu MongoDB không khởi tạo được cluster bằng script rs-init.sh, khởi tạo thủ công bằng cách sau:
 ```bash
-#!/bin/bash
-mongosh --eval "rs.initiate({
- _id: 'rs0',
- members: [{ _id: 0, host: 'localhost:27017' }]
-})"
+$ docker-compose exec mongo bash
+$ sh scripts/rs-init.sh
 ```
 
-Tạo file `mongo-scripts/mongo-init.js`:
-```javascript
-db.createUser({
-  user: 'admin',
-  pwd: 'admin',
-  roles: [
-    {
-      role: 'readWrite',
-      db: 'admin'
-    }
-  ]
-})
+Nếu MongoDB không khởi tạo được user, sử dụng các command line sau đây để khởi tạo:
+```bash
+$ docker-compose exec mongo mongosh
+$ use admin
+$ db.createUser({user: "admin", pwd: "admin",roles:[{role: "userAdminAnyDatabase" , db:"admin"}]}) 
+```
 ```
 
 ### 5. Tạo file cấu hình Monstache
