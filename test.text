@@ -33,9 +33,10 @@ $ sh scripts/rs-init.sh
 
 Nếu MongoDB không khởi tạo được user, sử dụng các command line sau đây để khởi tạo:
 ```bash
-$ docker-compose exec mongo mongosh
-$ use admin
-$ db.createUser({user: "admin", pwd: "admin",roles:[{role: "userAdminAnyDatabase" , db:"admin"}]}) 
+docker-compose exec mongo mongosh
+use admin
+db.createUser({user: "admin", pwd: "admin",roles:[{role: "userAdminAnyDatabase" , db:"admin"}]}) 
+db.createCollection("profile")
 ```
 
 Sau khi khởi tạo các docker, sử dụng CURL trong folder resources để tạo mapping cho index profiling. 
