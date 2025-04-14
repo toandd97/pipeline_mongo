@@ -176,6 +176,20 @@ services:
       - "8081:8081"  # Spark Worker UI
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark:7077
 
+  spark-app:
+    image: apache/spark:3.5.0
+    container_name: spark-app
+    depends_on:
+      - spark
+      - mongo
+      - starrock
+    networks:
+      - localnet
+    volumes:
+      - ./spark-apps:/opt/spark-apps
+      - ./spark-jars:/opt/spark/jars
+    command: /opt/spark/bin/spark-submit --master spark://spark:7077 --jars /opt/spark/jars/mongo-spark-connector.jar,/opt/spark/jars/starrocks-spark-connector-1.0.0.jar /opt/spark-apps/sync_mongo_to_starrocks.py
+
   # monstache-tags:
   #   image: rwynn/monstache:6.7.10
   #   container_name: monstachetags
