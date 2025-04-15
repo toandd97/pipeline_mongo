@@ -16,7 +16,7 @@ starrock_conn = mysql.connector.connect(
     host="starrock",
     port=9030,
     user="root",
-    password="123",
+    password="",
     database="profiling"  # Thay đổi nếu cần
 )
 starrock_cursor = starrock_conn.cursor()

@@ -177,7 +177,7 @@ services:
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark:7077
 
   spark-app:
-    image: apache/spark:3.5.0
+    image: custom-spark:3.5.0 # <-- Dùng image bạn đã build
     container_name: spark-app
     depends_on:
       - spark
@@ -186,9 +186,12 @@ services:
     networks:
       - localnet
     volumes:
-      - ./spark-apps:/opt/spark-apps
-      - ./spark-jars:/opt/spark/jars
-    command: /opt/spark/bin/spark-submit --master spark://spark:7077 --jars /opt/spark/jars/mongo-spark-connector.jar,/opt/spark/jars/starrocks-spark-connector-1.0.0.jar /opt/spark-apps/sync_mongo_to_starrocks.py
+      - ./entrypoint.sh:/app/entrypoint.sh
+    environment:
+      - PYSPARK_PYTHON=/usr/bin/python3
+    # command: ["tail", "-f", "/dev/null"]
+    command: ["bash", "/app/entrypoint.sh"]
+    restart: unless-stopped
 
   # monstache-tags:
   #   image: rwynn/monstache:6.7.10

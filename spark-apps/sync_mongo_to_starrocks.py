@@ -5,7 +5,7 @@ from pyspark.sql.functions import col
 spark = SparkSession.builder \
     .appName("MongoDB to StarRocks Sync") \
     .config("spark.mongodb.input.uri", "mongodb://mongo:27017/profiling.profile") \
-    .config("spark.jars", "/opt/spark/jars/mongo-spark-connector_2.12-3.0.1.jar,/opt/spark/jars/starrocks-spark-connector-1.0.0.jar") \
+    .config("spark.jars", "/opt/spark/jars/mongo-spark-connector_2.12-3.0.2.jar,/opt/spark/jars/starrocks-spark-connector-3.5_2.12-1.1.2.jar") \
     .getOrCreate()
 
 # Đọc dữ liệu từ MongoDB bằng Structured Streaming
