@@ -49,32 +49,38 @@ rs.reconfig(cfg)
 cfg = rs.conf()
 cfg.members[0].host = "mongo:27017"
 rs.reconfig(cfg)
+docker build -t spark-app -f Dockerfile.spark .
 
-docker cp /home/toandd/Documents/pipeline_mongo/spark-jars/. spark:/opt/spark/jars/
-docker cp /home/toandd/Documents/pipeline_mongo/spark-jars/. spark-worker:/opt/spark/jars/
-docker cp /home/toandd/Documents/pipeline_mongo/spark-jars/. spark-app:/opt/spark/jars/
-docker cp /home/toandd/Documents/pipeline_mongo/spark-apps/. spark-app:/opt/spark-apps/
-
-docker exec -it spark /opt/spark/bin/spark-shell --master spark://spark:7077 --jars /opt/spark/jars/mongo-spark-connector_2.12-3.0.2.jar
-docker cp ~/Documents/pipeline_mongo/spark-jars/mongodb-driver-sync-5.4.0.jar spark:/opt/spark/jars/
-docker cp ~/Documents/pipeline_mongo/spark-jars/scala-library-2.13.16.jar spark:/opt/spark/jars/
-docker cp ~/Documents/pipeline_mongo/spark-jars/bson-5.4.0.jar spark:/opt/spark/jars/
-docker cp ~/Documents/pipeline_mongo/spark-jars/mongodb-driver-core-5.4.0.jar spark:/opt/spark/jars/
-docker compose restart spark
 docker exec -it spark /opt/spark/bin/spark-shell --master spark://spark:7077
 
 val oplogDF = spark.read.format("mongo").option("uri", "mongodb://admin:admin@mongo:27017/local?authSource=admin").option("collection", "oplog.rs").load()
 
-// Lọc các thay đổi chỉ từ namespace "admin.profile"
-val filteredDF = oplogDF.filter($"ns" === "admin.profile")
+// Lọc các thay đổi chỉ từ namespace "profiling.profile"
+val filteredDF = oplogDF.filter($"ns" === "profiling.profile")
 
 // Hiển thị kết quả
 filteredDF.show()
 
 
+
+mysql -h 127.0.0.1 -P 9030 -u root -p
+        CREATE DATABASE profiling;
+        SHOW DATABASES;
+        USE profiling;
+        CREATE TABLE profile (
+            id VARCHAR(50),
+            name VARCHAR(50),
+            age INT,
+            email VARCHAR(100)
+        )
+        ENGINE=OLAP
+        DUPLICATE KEY(id)
+        DISTRIBUTED BY HASH(id) BUCKETS 3
+        PROPERTIES ("replication_num" = "1");
+
+
 StarRocks Connector for Spark
 
-docker build -t custom-spark:3.5.0 -f Dockerfile.spark .
 docker exec -it spark-app bash
 
 ls /opt/spark-apps/

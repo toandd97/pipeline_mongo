@@ -3,14 +3,20 @@ FROM apache/spark:3.5.0
 # Dùng quyền root để cài thêm gói
 USER root
 
+WORKDIR /opt/spark/work-dir/pipeline_mongo
+ADD . /opt/spark/work-dir/pipeline_mongo
+
+RUN cp -r /opt/spark/work-dir/pipeline_mongo/spark-jars/* /opt/spark/jars/
+
+# Tạo thư mục spark-apps trước khi copy
+RUN mkdir -p /opt/spark-apps/
+
 # Cài pip
 RUN apt-get update && apt-get install -y python3-pip
 
 # Copy requirements và cài Python packages
 COPY requirements.txt /app/requirements.txt
-RUN pip3 install --no-cache-dir -r /app/requirements.txt
-
+RUN pip3 install -r /app/requirements.txt
 
 # (Tùy spark yêu cầu user gì, bạn có thể chuyển lại nếu cần)
 # USER spark
-

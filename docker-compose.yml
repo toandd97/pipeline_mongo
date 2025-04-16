@@ -69,6 +69,7 @@ services:
     restart: always
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     volumes:
+      - mongo_data:/data/db
       - ./mongo-scripts/rs-init.sh:/scripts/rs-init.sh
       - ./mongo-scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
     environment:
@@ -145,7 +146,7 @@ services:
   #   restart: unless-stopped
 
   spark:
-    image: apache/spark:3.5.0
+    image: spark-app
     container_name: spark
     networks:
       - localnet
@@ -162,7 +163,7 @@ services:
       - "7077:7077"                 # Port giao tiếp Spark master
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master  # Khởi động Spark master
   spark-worker:
-    image: apache/spark:3.5.0
+    image: spark-app
     container_name: spark-worker
     depends_on:
       - spark
@@ -177,7 +178,7 @@ services:
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark:7077
 
   spark-app:
-    image: custom-spark:3.5.0 # <-- Dùng image bạn đã build
+    image: spark-app # <-- Dùng image bạn đã build
     container_name: spark-app
     depends_on:
       - spark
@@ -186,12 +187,21 @@ services:
     networks:
       - localnet
     volumes:
+      - spark_app:/data/spark_app
       - ./entrypoint.sh:/app/entrypoint.sh
+      - ./spark-apps:/opt/spark-apps
     environment:
       - PYSPARK_PYTHON=/usr/bin/python3
     # command: ["tail", "-f", "/dev/null"]
-    command: ["bash", "/app/entrypoint.sh"]
+    # command: ["bash", "/app/entrypoint.sh"]
+    command: >
+      bash -c "chmod +x /opt/spark-apps/sync_mongo_to_starrocks.py && 
+      /opt/spark/bin/spark-submit 
+      --master spark://spark:7077 
+      --jars /opt/spark/jars/mongo-spark-connector_2.12-3.0.2.jar,/opt/spark/jars/starrocks-spark-connector-3.5_2.12-1.1.2.jar,/opt/spark/jars/mysql-connector-j-8.0.33.jar 
+      /opt/spark-apps/sync_mongo_to_starrocks.py"
     restart: unless-stopped
+
 
   # monstache-tags:
   #   image: rwynn/monstache:6.7.10
@@ -216,6 +226,10 @@ services:
 
 volumes:
   elasticsearch-data:
+    driver: local
+  mongo_data:
+    driver: local
+  spark_app:
     driver: local
 
 networks:
